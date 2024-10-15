@@ -1,9 +1,9 @@
 import {GalleryItem} from "./ImageGalleryItem.styled";
 
-const ImageGalleryItem = () => {
+const ImageGalleryItem = ({image: {webformatURL, tags}}) => {
   return (
     <GalleryItem>
-      <img src="" alt=""/>
+      <img src={webformatURL} alt={tags}/>
     </GalleryItem>
   )
 }
