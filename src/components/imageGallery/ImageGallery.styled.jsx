@@ -1,5 +1,10 @@
 import styled from "@emotion/styled";
 
+export const MainContent = styled.main`
+  text-align: center;
+  padding-bottom: 15px;
+`
+
 export const ContainerGallery = styled.ul`
   display: grid;
   max-width: calc(100vw - 48px);

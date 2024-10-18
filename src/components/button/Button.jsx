@@ -1,9 +1,10 @@
+import {ButtonStyle} from './Button.styled';
 
-const Button = props => {
+const Button = ({setPage}) => {
   return (
-    <button>
+    <ButtonStyle className="load-more-btn" onClick={setPage}>
       Load more
-    </button>
+    </ButtonStyle>
   )
 }
 
