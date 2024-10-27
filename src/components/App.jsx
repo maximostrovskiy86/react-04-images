@@ -10,7 +10,7 @@ export const App = () => {
   return (
     <div>
       <SearchBar onSubmit={setValue}/>
-      <ImageGallery value={value} />
+      <ImageGallery value={value} setValue={setValue}/>
       <ToastContainer autoClose={3000} theme="colored"/>
     </div>
   );
