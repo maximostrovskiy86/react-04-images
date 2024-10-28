@@ -4,6 +4,9 @@ import ImageGalleryItem from "./imageGalleryItem";
 import {fetchGetImages, fetchLoadMOreImages} from "../../services/Api";
 import Button from "../button";
 import {nanoid} from 'nanoid'
+import {ProgressBar, Blocks} from 'react-loader-spinner';
+import {smoothScroll} from "../../helpers/smoothScroll";
+import * as PropTypes from "prop-types";
 
 const Status = {
   IDLE: 'idle',
@@ -12,24 +15,12 @@ const Status = {
   REJECTED: 'rejected',
 }
 
-export const smoothScroll = () => {
-  const element = document.querySelector('.load-more-btn');
-  element.scrollIntoView({
-    behavior: 'smooth',
-    // block: 'start',
-    block: 'end',
-  });
-}
-
 const ImageGallery = ({value}) => {
 
   const [gallery, setGallery] = useState([]);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState(Status.IDLE);
-  const [error, setError] = useState(null);
   const [, setQuery] = useState('');
-  const [loadButton, setLoadButton] = useState(false);
-
 
   useEffect(() => {
     if (value === "") {
@@ -37,78 +28,78 @@ const ImageGallery = ({value}) => {
     }
 
     setQuery((prevState) => {
-      // console.log("prevState", prevState)
-      // console.log("value", value)
       if (prevState !== value) {
         setPage(1);
       }
     })
-
-
-    console.log("UESEFFECT---1")
+    setStatus(Status.PENDING);
 
     fetchGetImages(value).then(results => {
-      if (results.length > 0) {
-        setLoadButton(true)
-      }
+      setQuery(value);
+      setStatus(Status.RESOLVED);
+      setGallery(results.hits);
 
-
-      setQuery((prevState) => {
-        setQuery(value);
-        setGallery(results.hits)
-      })
     }).catch(error => {
-      setError(error);
-      setStatus(Status.REJECTED);
+      console.log(error);
+      setStatus(status.REJECTED);
+    }).finally(() => {
+      if (gallery.length < 0) {
+        setStatus(Status.IDLE)
+      }
     })
   }, [value])
 
 
   useEffect(() => {
-
     if (page === 1) {
       return;
     }
 
-    console.log("PAGE", page);
-    console.log("UESEFFECT-------2");
-
+    setStatus(Status.PENDING);
     fetchLoadMOreImages(value, page).then(results => {
-
-      if (!results.length) {
-        setLoadButton(false)
-      }
-
+      setStatus(Status.RESOLVED);
       setGallery(prevState => [...prevState, ...results.hits])
-      console.log("results", results.hits)
-
     }).catch(error => {
-      setError(error);
+      console.log(error);
       setStatus(Status.REJECTED);
-    }).finally(() => {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: "smooth",
-      })
-    })
-
+    }).finally(() => smoothScroll())
   }, [page])
+
+  console.log('STATUS', status)
 
   const onLoadMore = () => {
     setPage(prevState => prevState + 1);
   }
 
-  console.log("gellery", gallery)
+  if (status === 'idle') {
+    return <h2 style={{textAlign: "center", marginTop: '20px'}}>Enter the name image which you want to find</h2>
+  }
 
+  if (status === 'pending') {
+  // if (status === 'resolved') {
+    return <div style={{textAlign: "center", marginTop: '20px'}}>
+      <Blocks
+        height="80"
+        width="80"
+        color="#4fa94d"
+        ariaLabel="blocks-loading"
+        wrapperStyle={{}}
+        wrapperClass="blocks-wrapper"
+        visible/>
+    </div>
+  }
 
-  return (
-    <MainContent>
-      <ContainerGallery>
-        {gallery.map(image => (<ImageGalleryItem key={nanoid()} image={image}/>))}
-      </ContainerGallery>
-      {gallery.length > 0 && <Button setPage={onLoadMore}/>}
-    </MainContent>
-  )
+  if (status === 'resolved') {
+    return (
+      <MainContent>
+        <ContainerGallery>
+          {gallery.map(image => (<ImageGalleryItem key={nanoid()} image={image}/>))}
+        </ContainerGallery>
+        {gallery.length > 0 && <Button setPage={onLoadMore}/>}
+      </MainContent>
+    )
+  }
+
 }
 
 export default ImageGallery;
