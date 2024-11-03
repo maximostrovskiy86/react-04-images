@@ -4,9 +4,9 @@ import ImageGalleryItem from "./imageGalleryItem";
 import {fetchGetImages, fetchLoadMOreImages} from "../../services/Api";
 import Button from "../button";
 import {nanoid} from 'nanoid'
-import {ProgressBar, Blocks} from 'react-loader-spinner';
-import {smoothScroll} from "../../helpers/smoothScroll";
-import * as PropTypes from "prop-types";
+import {Blocks} from 'react-loader-spinner';
+// import {smoothScroll} from "../../helpers/smoothScroll";
+import Modal from "../modal";
 
 const Status = {
   IDLE: 'idle',
@@ -15,17 +15,33 @@ const Status = {
   REJECTED: 'rejected',
 }
 
+const smoothScroll = () => {
+  const element = document.querySelector('.load-more-btn');
+  console.log('smoothScroll', element);
+  element.scrollIntoView({
+    behavior: 'smooth',
+    // block: 'start',
+    block: 'end',
+  });
+}
+
 const ImageGallery = ({value}) => {
 
   const [gallery, setGallery] = useState([]);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState(Status.IDLE);
   const [, setQuery] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [largeImg, setLargeImg] = useState('');
+
 
   useEffect(() => {
     if (value === "") {
       return
     }
+
+    console.log('USE_EFFECT-1' )
+
 
     setQuery((prevState) => {
       if (prevState !== value) {
@@ -54,21 +70,39 @@ const ImageGallery = ({value}) => {
     if (page === 1) {
       return;
     }
-
     setStatus(Status.PENDING);
+
+    console.log('USE_EFFECT-2' )
+
     fetchLoadMOreImages(value, page).then(results => {
       setStatus(Status.RESOLVED);
       setGallery(prevState => [...prevState, ...results.hits])
     }).catch(error => {
       console.log(error);
       setStatus(Status.REJECTED);
-    }).finally(() => smoothScroll())
+    }).finally(() => {
+      // setStatus(Status.RESOLVED)
+
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    })
   }, [page])
 
-  console.log('STATUS', status)
 
   const onLoadMore = () => {
+    // setStatus(Status.RESOLVED)
     setPage(prevState => prevState + 1);
+  }
+
+  const toggleModal = () => {
+    setShowModal(state => !state)
+  }
+
+  const onClickCurrentImage = (largeImg) => {
+    setShowModal(prev => !prev);
+    setLargeImg(largeImg);
   }
 
   if (status === 'idle') {
@@ -76,7 +110,6 @@ const ImageGallery = ({value}) => {
   }
 
   if (status === 'pending') {
-  // if (status === 'resolved') {
     return <div style={{textAlign: "center", marginTop: '20px'}}>
       <Blocks
         height="80"
@@ -93,13 +126,15 @@ const ImageGallery = ({value}) => {
     return (
       <MainContent>
         <ContainerGallery>
-          {gallery.map(image => (<ImageGalleryItem key={nanoid()} image={image}/>))}
+          {gallery.map(image => (
+            <ImageGalleryItem key={nanoid()} image={image} onClickCurrentImage={onClickCurrentImage}/>))}
         </ContainerGallery>
+        {showModal && <Modal toggleModal={toggleModal}> <img src={largeImg} alt="Изображение"/>
+        </Modal>}
         {gallery.length > 0 && <Button setPage={onLoadMore}/>}
       </MainContent>
     )
   }
-
 }
 
 export default ImageGallery;
